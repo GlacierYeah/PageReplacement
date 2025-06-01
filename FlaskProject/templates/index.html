@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态页面置换算法模拟器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .settings-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .settings-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setting-item label {
+            font-weight: 500;
+            color: #4a5568;
+            white-space: nowrap;
+        }
+
+        .setting-item input {
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .setting-item input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .sequence-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sequence-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .sequence-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .speed-slider {
+            width: 100px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .algorithms-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .algorithm-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            min-height: 500px;
+        }
+
+        .algorithm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .algorithm-panel.fifo .algorithm-header {
+            border-bottom-color: #ff6b6b;
+        }
+
+        .algorithm-panel.lru .algorithm-header {
+            border-bottom-color: #4ecdc4;
+        }
+
+        .algorithm-panel.opt .algorithm-header {
+            border-bottom-color: #45b7d1;
+        }
+
+        .algorithm-panel.lfu .algorithm-header {
+            border-bottom-color: #f9ca24;
+        }
+
+        .algorithm-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .algorithm-panel.fifo .algorithm-title {
+            color: #ff6b6b;
+        }
+
+        .algorithm-panel.lru .algorithm-title {
+            color: #4ecdc4;
+        }
+
+        .algorithm-panel.opt .algorithm-title {
+            color: #45b7d1;
+        }
+
+        .algorithm-panel.lfu .algorithm-title {
+            color: #f9ca24;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .status-running {
+            background: #48bb78;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-paused {
+            background: #ed8936;
+        }
+
+        .status-completed {
+            background: #38b2ac;
+        }
+
+        .status-waiting {
+            background: #e2e8f0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stats-grid {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: space-between;
+        }
+
+        .stat-card {
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .algorithm-panel.fifo .stat-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .algorithm-panel.lru .stat-card {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+        }
+
+        .algorithm-panel.opt .stat-card {
+            background: linear-gradient(135deg, #45b7d1 0%, #3498db 100%);
+        }
+
+        .algorithm-panel.lfu .stat-card {
+            background: linear-gradient(135deg, #f9ca24 0%, #f0932b 100%);
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+
+        .access-history {
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            height: 200px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .access-history table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            table-layout: fixed;
+        }
+
+        .access-history thead {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+            display: table;
+            width: 100%;
+        }
+
+        .access-history tbody {
+            display: block;
+            max-height: 150px;
+            overflow-y: scroll;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 #f7fafc;
+        }
+
+        .access-history tbody::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .access-history tbody::-webkit-scrollbar-track {
+            background: #f7fafc;
+            border-radius: 3px;
+        }
+
+        .access-history tbody::-webkit-scrollbar-thumb {
+            background-color: #cbd5e0;
+            border-radius: 3px;
+        }
+
+        .access-history tbody::-webkit-scrollbar-thumb:hover {
+            background-color: #a0aec0;
+        }
+
+        .access-history thead tr,
+        .access-history tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .access-history th,
+        .access-history td {
+            padding: 6px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .access-history th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .access-history tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .access-history tr:hover {
+            background: #edf2f7;
+        }
+
+        .access-history .page-table {
+            display: flex;
+            gap: 2px;
+        }
+
+        .access-history .page-cell {
+            min-width: 30px;
+            padding: 2px;
+            border: 1px solid #e2e8f0;
+            border-radius: 3px;
+        }
+
+        .access-history .scroll-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+        }
+
+        .access-history .scroll-indicator::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #4a5568;
+        }
+
+        .access-history.expanded {
+            height: 400px;
+        }
+
+        .access-history.expanded .scroll-indicator::after {
+            transform: rotate(180deg);
+        }
+
+        .current-step {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .step-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .accessing-page {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .step-number {
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .memory-visualization {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .memory-block {
+            width: 45px;
+            height: 45px;
+            border: 3px solid;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algorithm-panel.fifo .memory-block {
+            border-color: #ff6b6b;
+        }
+
+        .algorithm-panel.lru .memory-block {
+            border-color: #4ecdc4;
+        }
+
+        .algorithm-panel.opt .memory-block {
+            border-color: #45b7d1;
+        }
+
+        .algorithm-panel.lfu .memory-block {
+            border-color: #f9ca24;
+        }
+
+        .memory-block.filled {
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .algorithm-panel.fifo .memory-block.filled {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .algorithm-panel.lru .memory-block.filled {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+        }
+
+        .algorithm-panel.opt .memory-block.filled {
+            background: linear-gradient(135deg, #45b7d1 0%, #3498db 100%);
+        }
+
+        .algorithm-panel.lfu .memory-block.filled {
+            background: linear-gradient(135deg, #f9ca24 0%, #f0932b 100%);
+        }
+
+        .memory-block.empty {
+            background: #f7fafc;
+            color: #a0aec0;
+        }
+
+        .memory-block.new-page {
+            animation: newPageAnimation 0.6s ease;
+        }
+
+        .memory-block.replaced {
+            animation: replaceAnimation 0.8s ease;
+        }
+
+        @keyframes newPageAnimation {
+            0% { transform: scale(0.8) rotate(-10deg); opacity: 0.5; }
+            50% { transform: scale(1.2) rotate(5deg); opacity: 0.8; }
+            100% { transform: scale(1.05) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes replaceAnimation {
+            0% { transform: scale(1.05); }
+            25% { transform: scale(0.8) rotateY(90deg); }
+            75% { transform: scale(1.2) rotateY(-90deg); }
+            100% { transform: scale(1.05) rotateY(0deg); }
+        }
+
+        .quick-table-section {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .quick-table-section.show {
+            display: block;
+        }
+
+        .quick-table-title {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .quick-table {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .quick-block {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #4facfe;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .quick-block.filled {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .replace-info {
+            text-align: center;
+            padding: 10px;
+            background: #edf2f7;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #4a5568;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-info {
+            background: #f0f4f8;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .comparison-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .comparison-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #2d3748;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .best-result {
+            background: #c6f6d5 !important;
+            font-weight: bold;
+            color: #2f855a;
+        }
+
+        @media (max-width: 1200px) {
+            .algorithms-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .settings-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .settings-group {
+                justify-content: space-between;
+            }
+
+            .control-buttons {
+                flex-wrap: wrap;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>动态页面置换算法模拟器</h1>
+            <p>实时并行模拟FIFO、LRU、OPT、LFU四种算法</p>
+        </div>
+
+        <!-- 设置栏 -->
+        <div class="settings-bar">
+            <div class="settings-group">
+                <div class="setting-item">
+                    <label>内存块数:</label>
+                    <input type="number" id="memorySize" value="3" min="1" max="10">
+                </div>
+                <div class="setting-item">
+                    <label>快表块数:</label>
+                    <input type="number" id="quickTableSize" value="4" min="1" max="4">
+                </div>
+                <div class="setting-item">
+                    <label>快表:</label>
+                    <input type="checkbox" id="useQuickTable">
+                </div>
+            </div>
+            <div class="settings-group">
+                <button class="btn btn-secondary" onclick="generateRandom()">随机序列</button>
+                <button class="btn btn-secondary" onclick="saveResults()">保存结果</button>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="sequence-section">
+                <input type="text" class="sequence-input" id="pageSequence"
+                       placeholder="输入页面访问序列，用逗号或空格分隔 (如: 4,1,5,6,6,3,5,6,4,5,2,4,2,3,2,4,2,1,4,3)"
+                       value="4,1,5,6,6,3,5,6,4,5,2,4,2,3,2,4,2,1,4,3">
+                <button class="btn" onclick="clearSequence()">清空</button>
+            </div>
+
+            <div class="control-buttons">
+                <button class="btn" id="startBtn" onclick="startSimulation()">开始模拟</button>
+                <button class="btn btn-secondary" id="pauseBtn" onclick="pauseSimulation()" disabled>暂停</button>
+                <button class="btn btn-danger" id="stopBtn" onclick="stopSimulation()" disabled>停止</button>
+
+                <div class="speed-control">
+                    <label>速度:</label>
+                    <input type="range" class="speed-slider" id="speedSlider" min="1" max="10" value="5">
+                    <span id="speedValue">5x</span>
+                </div>
+            </div>
+
+            <div class="progress-info" id="progressInfo" style="display: none;">
+                <div class="progress-text" id="progressText">准备开始...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 算法面板 -->
+        <div class="algorithms-container">
+            <div class="algorithm-panel fifo" id="fifoPanel">
+                <div class="algorithm-header">
+                    <h3 class="algorithm-title">FIFO (先进先出)</h3>
+                    <span class="status-indicator status-waiting" id="fifoStatus"></span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="fifoFaults">0</div>
+                        <div class="stat-label">缺页次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="fifoRate">0.00%</div>
+                        <div class="stat-label">缺页率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="fifoTime">0ms</div>
+                        <div class="stat-label">总时间</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="fifoAvgTime">0.0ms</div>
+                        <div class="stat-label">平均时间</div>
+                    </div>
+                </div>
+
+                <div class="current-step">
+                    <div class="step-info">
+                        <span class="accessing-page">访问页面: <span id="fifoCurrentPage">-</span></span>
+                        <span class="step-number">步骤: <span id="fifoStepNum">0</span></span>
+                    </div>
+
+                    <div class="memory-visualization" id="fifoMemory"></div>
+
+                    <div class="quick-table-section" id="fifoQuickSection">
+                        <div class="quick-table-title">快表状态</div>
+                        <div class="quick-table" id="fifoQuickTable"></div>
+                    </div>
+
+                    <div class="replace-info" id="fifoReplaceInfo">等待开始...</div>
+                </div>
+
+                <div class="access-history">
+                    <table>
+                        <thead id="fifoTableHeader">
+                            <tr>
+                                <th>访问页面</th>
+                                <th>内存块</th>
+                                <th>快表项</th>
+                                <th>缺页置换</th>
+                                <th>存取时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fifoHistoryTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="algorithm-panel lru" id="lruPanel">
+                <div class="algorithm-header">
+                    <h3 class="algorithm-title">LRU (最近最少使用)</h3>
+                    <span class="status-indicator status-waiting" id="lruStatus"></span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="lruFaults">0</div>
+                        <div class="stat-label">缺页次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lruRate">0.00%</div>
+                        <div class="stat-label">缺页率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lruTime">0ms</div>
+                        <div class="stat-label">总时间</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lruAvgTime">0.0ms</div>
+                        <div class="stat-label">平均时间</div>
+                    </div>
+                </div>
+
+                <div class="current-step">
+                    <div class="step-info">
+                        <span class="accessing-page">访问页面: <span id="lruCurrentPage">-</span></span>
+                        <span class="step-number">步骤: <span id="lruStepNum">0</span></span>
+                    </div>
+
+                    <div class="memory-visualization" id="lruMemory"></div>
+
+                    <div class="quick-table-section" id="lruQuickSection">
+                        <div class="quick-table-title">快表状态</div>
+                        <div class="quick-table" id="lruQuickTable"></div>
+                    </div>
+
+                    <div class="replace-info" id="lruReplaceInfo">等待开始...</div>
+                </div>
+
+                <div class="access-history">
+                    <table>
+                        <thead id="lruTableHeader">
+                            <tr>
+                                <th>访问页面</th>
+                                <th>内存块</th>
+                                <th>快表项</th>
+                                <th>缺页置换</th>
+                                <th>存取时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lruHistoryTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="algorithm-panel opt" id="optPanel">
+                <div class="algorithm-header">
+                    <h3 class="algorithm-title">OPT (最优置换)</h3>
+                    <span class="status-indicator status-waiting" id="optStatus"></span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="optFaults">0</div>
+                        <div class="stat-label">缺页次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="optRate">0.00%</div>
+                        <div class="stat-label">缺页率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="optTime">0ms</div>
+                        <div class="stat-label">总时间</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="optAvgTime">0.0ms</div>
+                        <div class="stat-label">平均时间</div>
+                    </div>
+                </div>
+
+                <div class="current-step">
+                    <div class="step-info">
+                        <span class="accessing-page">访问页面: <span id="optCurrentPage">-</span></span>
+                        <span class="step-number">步骤: <span id="optStepNum">0</span></span>
+                    </div>
+
+                    <div class="memory-visualization" id="optMemory"></div>
+
+                    <div class="quick-table-section" id="optQuickSection">
+                        <div class="quick-table-title">快表状态</div>
+                        <div class="quick-table" id="optQuickTable"></div>
+                    </div>
+
+                    <div class="replace-info" id="optReplaceInfo">等待开始...</div>
+                </div>
+
+                <div class="access-history">
+                    <table>
+                        <thead id="optTableHeader">
+                            <tr>
+                                <th>访问页面</th>
+                                <th>内存块</th>
+                                <th>快表项</th>
+                                <th>缺页置换</th>
+                                <th>存取时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="optHistoryTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="algorithm-panel lfu" id="lfuPanel">
+                <div class="algorithm-header">
+                    <h3 class="algorithm-title">LFU (最少使用频次)</h3>
+                    <span class="status-indicator status-waiting" id="lfuStatus"></span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="lfuFaults">0</div>
+                        <div class="stat-label">缺页次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lfuRate">0.00%</div>
+                        <div class="stat-label">缺页率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lfuTime">0ms</div>
+                        <div class="stat-label">总时间</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lfuAvgTime">0.0ms</div>
+                        <div class="stat-label">平均时间</div>
+                    </div>
+                </div>
+
+                <div class="current-step">
+                    <div class="step-info">
+                        <span class="accessing-page">访问页面: <span id="lfuCurrentPage">-</span></span>
+                        <span class="step-number">步骤: <span id="lfuStepNum">0</span></span>
+                    </div>
+
+                    <div class="memory-visualization" id="lfuMemory"></div>
+
+                    <div class="quick-table-section" id="lfuQuickSection">
+                        <div class="quick-table-title">快表状态</div>
+                        <div class="quick-table" id="lfuQuickTable"></div>
+                    </div>
+
+                    <div class="replace-info" id="lfuReplaceInfo">等待开始...</div>
+                </div>
+
+                <div class="access-history">
+                    <table>
+                        <thead id="lfuTableHeader">
+                            <tr>
+                                <th>访问页面</th>
+                                <th>内存块</th>
+                                <th>快表项</th>
+                                <th>缺页置换</th>
+                                <th>存取时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lfuHistoryTable">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 比较结果 -->
+        <div class="comparison-section" id="comparisonSection" style="display: none;">
+            <h3 class="comparison-title">算法性能比较</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>算法</th>
+                        <th>缺页次数</th>
+                        <th>缺页率</th>
+                        <th>总时间 (ms)</th>
+                        <th>平均时间 (ms)</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let isRunning = false;
+        let isPaused = false;
+        let currentStep = 0;
+        let pageSequence = [];
+        let memorySize = 3;
+        let quickTableSize = 4;
+        let useQuickTable = false;
+        let simulationSpeed = 500;
+        let timeouts = [];
+
+        // 时间设置
+        let timeSettings = {
+            memoryAccessTime: 100,    // 内存访问时间 (ns)
+            pageFaultTime: 10000,     // 缺页中断时间 (ns)
+            quickTableTime: 20        // 快表访问时间 (ns)
+        };
+
+        // 算法状态
+        let algorithms = {
+            fifo: { memory: [], faults: 0, time: 0, step: 0, quickTable: [] },
+            lru: { memory: [], faults: 0, time: 0, step: 0, quickTable: [] },
+            opt: { memory: [], faults: 0, time: 0, step: 0, quickTable: [] },
+            lfu: { memory: [], faults: 0, time: 0, step: 0, quickTable: [] }
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeUI();
+            setupEventListeners();
+        });
+
+        function initializeUI() {
+            // 初始化内存可视化
+            ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                updateMemoryVisualization(algo);
+                updateQuickTableVisualization(algo);
+                
+                // 添加下拉框指示器
+                const historyContainer = document.querySelector(`#${algo}Panel .access-history`);
+                const scrollIndicator = document.createElement('div');
+                scrollIndicator.className = 'scroll-indicator';
+                scrollIndicator.onclick = function() {
+                    historyContainer.classList.toggle('expanded');
+                };
+                historyContainer.appendChild(scrollIndicator);
+            });
+
+            // 设置速度滑块
+            updateSpeedDisplay();
+        }
+
+        function setupEventListeners() {
+            // 内存大小变化
+            document.getElementById('memorySize').addEventListener('change', function() {
+                memorySize = parseInt(this.value);
+                if (!isRunning) {
+                    updateTableHeaders();
+                    resetAllAlgorithms();
+                }
+            });
+
+            // 快表块数变化
+            document.getElementById('quickTableSize').addEventListener('change', function() {
+                quickTableSize = parseInt(this.value);
+                if (!isRunning) {
+                    updateTableHeaders();
+                    resetAllAlgorithms();
+                }
+            });
+
+            // 快表选项
+            document.getElementById('useQuickTable').addEventListener('change', function() {
+                useQuickTable = this.checked;
+                document.querySelectorAll('.quick-table-section').forEach(section => {
+                    section.classList.toggle('show', useQuickTable);
+                });
+                if (!isRunning) {
+                    updateTableHeaders();
+                    resetAllAlgorithms();
+                }
+            });
+
+            // 速度滑块
+            document.getElementById('speedSlider').addEventListener('input', function() {
+                simulationSpeed = 1100 - (parseInt(this.value) * 100);
+                updateSpeedDisplay();
+            });
+
+            // 回车键开始模拟
+            document.getElementById('pageSequence').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !isRunning) {
+                    startSimulation();
+                }
+            });
+        }
+
+        function updateSpeedDisplay() {
+            const speed = document.getElementById('speedSlider').value;
+            document.getElementById('speedValue').textContent = speed + 'x';
+        }
+
+        function generateRandom() {
+            const length = Math.floor(Math.random() * 15) + 10; // 10-25个页面
+            const maxPage = Math.floor(Math.random() * 8) + 3;  // 页面编号3-10
+            const sequence = [];
+
+            for (let i = 0; i < length; i++) {
+                sequence.push(Math.floor(Math.random() * maxPage) + 1);
+            }
+
+            document.getElementById('pageSequence').value = sequence.join(',');
+        }
+
+        function clearSequence() {
+            document.getElementById('pageSequence').value = '';
+        }
+
+        function parsePageSequence() {
+            const input = document.getElementById('pageSequence').value.trim();
+            if (!input) {
+                alert('请输入页面访问序列！');
+                return false;
+            }
+
+            pageSequence = input.split(/[,\s]+/).map(x => parseInt(x.trim())).filter(x => !isNaN(x) && x > 0);
+
+            if (pageSequence.length === 0) {
+                alert('请输入有效的页面访问序列！');
+                return false;
+            }
+
+            return true;
+        }
+
+        async function startSimulation() {
+            if (!parsePageSequence()) return;
+
+            isRunning = true;
+            isPaused = false;
+            currentStep = 0;
+
+            // 重置所有算法状态
+            await resetAllAlgorithms();
+
+            // 更新UI状态
+            updateControlButtons();
+            showProgress();
+
+            // 更新所有算法的状态为运行中
+            ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                updateStatus(algo, 'running');
+            });
+
+            // 并行启动所有算法
+            ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                runAlgorithm(algo);
+            });
+        }
+
+        function pauseSimulation() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+
+            if (isPaused) {
+                pauseBtn.textContent = '继续';
+                // 清除所有定时器
+                timeouts.forEach(timeout => clearTimeout(timeout));
+                timeouts = [];
+
+                ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                    updateStatus(algo, 'paused');
+                });
+            } else {
+                pauseBtn.textContent = '暂停';
+                // 重新启动所有算法
+                ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                    if (algorithms[algo].step < pageSequence.length) {
+                        updateStatus(algo, 'running');
+                        runAlgorithm(algo);
+                    }
+                });
+            }
+        }
+
+        async function stopSimulation() {
+            isRunning = false;
+            isPaused = false;
+
+            // 清除所有定时器
+            timeouts.forEach(timeout => clearTimeout(timeout));
+            timeouts = [];
+
+            // 更新UI状态
+            updateControlButtons();
+            hideProgress();
+
+            // 重置所有算法
+            await resetAllAlgorithms();
+
+            ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                updateStatus(algo, 'waiting');
+            });
+
+            // 隐藏比较结果
+            document.getElementById('comparisonSection').style.display = 'none';
+        }
+
+        async function resetAllAlgorithms() {
+            try {
+                const response = await fetch('/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok || result.status !== 'success') {
+                    throw new Error(result.message || '重置失败');
+                }
+
+                // 重置前端状态
+                ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                    algorithms[algo] = {
+                        memory: [],
+                        faults: 0,
+                        time: 0,
+                        step: 0,
+                        quickTable: []
+                    };
+                    updateMemoryVisualization(algo);
+                    updateQuickTableVisualization(algo);
+                    updateStats(algo);
+                    updateCurrentStep(algo, '-', 0);
+                    updateReplaceInfo(algo, '等待开始...');
+                    // 清空历史记录
+                    document.getElementById(algo + 'HistoryTable').innerHTML = '';
+                });
+
+                return true;
+            } catch (error) {
+                console.error('Error resetting algorithms:', error);
+                alert('重置算法时发生错误：' + error.message);
+                return false;
+            }
+        }
+
+        function updateControlButtons() {
+            document.getElementById('startBtn').disabled = isRunning;
+            document.getElementById('pauseBtn').disabled = !isRunning;
+            document.getElementById('stopBtn').disabled = !isRunning;
+        }
+
+        function showProgress() {
+            document.getElementById('progressInfo').style.display = 'block';
+            updateProgress();
+        }
+
+        function hideProgress() {
+            document.getElementById('progressInfo').style.display = 'none';
+        }
+
+        function updateProgress() {
+            if (!isRunning) return;
+
+            const maxStep = Math.max(...Object.values(algorithms).map(a => a.step));
+            const progress = Math.min((maxStep / pageSequence.length) * 100, 100);
+
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent =
+                `处理进度: ${maxStep}/${pageSequence.length} (${progress.toFixed(1)}%)`;
+
+            if (maxStep < pageSequence.length && isRunning && !isPaused) {
+                setTimeout(updateProgress, 100);
+            }
+        }
+
+        function updateStatus(algo, status) {
+            const statusEl = document.getElementById(algo + 'Status');
+            statusEl.className = 'status-indicator status-' + status;
+        }
+
+        async function runAlgorithm(algoName) {
+            if (!isRunning || isPaused) return;
+
+            const currentPage = pageSequence[algorithms[algoName].step];
+            if (!currentPage) {
+                updateStatus(algoName, 'completed');
+                checkAllCompleted();
+                return;
+            }
+
+            try {
+                console.log('Processing page:', currentPage, 'for algorithm:', algoName);
+
+                const requestData = {
+                    algorithm: algoName,
+                    page: currentPage,
+                    memory_size: memorySize,
+                    use_quick_table: useQuickTable,
+                    time_settings: timeSettings,
+                    future_sequence: pageSequence.slice(algorithms[algoName].step + 1)
+                };
+                console.log('Request data:', requestData);
+
+                const response = await fetch('/process_page', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Received result:', result);
+
+                if (result.status === 'error') {
+                    throw new Error(result.error || '处理页面时发生错误');
+                }
+                
+                // 更新算法状态
+                algorithms[algoName].memory = result.memory;
+                algorithms[algoName].quickTable = result.quick_table;
+                algorithms[algoName].faults = result.faults;
+                algorithms[algoName].time = result.total_time;
+                algorithms[algoName].step = result.step;
+
+                // 更新UI
+                updateMemoryVisualization(algoName, result.replaced_page);
+                if (useQuickTable) {
+                    updateQuickTableVisualization(algoName);
+                }
+                updateStats(algoName);
+                updateCurrentStep(algoName, currentPage, result.step);
+                updateReplaceInfo(algoName, result.history[result.history.length - 1]);
+                
+                // 更新历史记录，添加当前内存状态和快表状态
+                const currentHistory = result.history.map(entry => ({
+                    ...entry,
+                    memory: algorithms[algoName].memory.slice(),
+                    quick_table: algorithms[algoName].quickTable.slice()
+                }));
+                updateHistoryTable(algoName, currentHistory);
+
+                // 继续下一步
+                if (result.step < pageSequence.length && isRunning && !isPaused) {
+                    const timeout = setTimeout(() => runAlgorithm(algoName), simulationSpeed);
+                    timeouts.push(timeout);
+                } else if (result.step >= pageSequence.length) {
+                    updateStatus(algoName, 'completed');
+                    checkAllCompleted();
+                }
+            } catch (error) {
+                console.error('Error in runAlgorithm:', error);
+                alert('处理页面时发生错误：' + error.message);
+                stopSimulation();
+            }
+        }
+
+        function checkAllCompleted() {
+            const allCompleted = Object.values(algorithms).every(alg => alg.step >= pageSequence.length);
+
+            if (allCompleted) {
+                isRunning = false;
+                updateControlButtons();
+                hideProgress();
+                showComparison();
+            }
+        }
+
+        function updateMemoryVisualization(algoName, replacedPage = null) {
+            const container = document.getElementById(algoName + 'Memory');
+            const alg = algorithms[algoName];
+
+            container.innerHTML = '';
+
+            for (let i = 0; i < memorySize; i++) {
+                const block = document.createElement('div');
+                block.className = 'memory-block';
+
+                if (i < alg.memory.length) {
+                    block.className += ' filled';
+                    block.textContent = alg.memory[i];
+
+                    // 添加动画效果
+                    if (replacedPage && alg.memory[i] !== replacedPage) {
+                        if (alg.memory.indexOf(alg.memory[i]) === alg.memory.length - 1) {
+                            block.className += ' new-page';
+                        }
+                    } else if (replacedPage && alg.memory[i] !== replacedPage) {
+                        block.className += ' replaced';
+                    }
+                } else {
+                    block.className += ' empty';
+                    block.textContent = '-';
+                }
+
+                container.appendChild(block);
+            }
+        }
+
+        function updateQuickTableVisualization(algoName) {
+            if (!useQuickTable) return;
+
+            const container = document.getElementById(algoName + 'QuickTable');
+            const alg = algorithms[algoName];
+
+            container.innerHTML = '';
+
+            for (let i = 0; i < quickTableSize; i++) {
+                const block = document.createElement('div');
+                block.className = 'quick-block';
+
+                if (i < alg.quickTable.length) {
+                    block.className += ' filled';
+                    block.textContent = alg.quickTable[i];
+                } else {
+                    block.textContent = '-';
+                }
+
+                container.appendChild(block);
+            }
+        }
+
+        function updateStats(algoName) {
+            const alg = algorithms[algoName];
+            const totalAccesses = alg.step || 1;
+            const faultRate = ((alg.faults / totalAccesses) * 100).toFixed(2);
+            const avgTime = alg.step > 0 ? (alg.time / alg.step).toFixed(1) : '0.0';
+
+            document.getElementById(algoName + 'Faults').textContent = alg.faults;
+            document.getElementById(algoName + 'Rate').textContent = faultRate + '%';
+            document.getElementById(algoName + 'Time').textContent = (alg.time / 1000).toFixed(1) + 'μs';
+            document.getElementById(algoName + 'AvgTime').textContent = avgTime + 'ns';
+        }
+
+        function updateCurrentStep(algoName, page, stepNum) {
+            document.getElementById(algoName + 'CurrentPage').textContent = page;
+            document.getElementById(algoName + 'StepNum').textContent = stepNum;
+        }
+
+        function updateReplaceInfo(algoName, info) {
+            let message = '';
+            switch (info.type) {
+                case 'quick_table_hit':
+                    message = `快表命中！访问时间: ${info.time}ns`;
+                    break;
+                case 'memory_hit':
+                    message = `内存命中！访问时间: ${info.time}ns`;
+                    break;
+                case 'page_fault_new':
+                    message = `缺页中断！页面${info.page}载入内存，访问时间: ${info.time}ns`;
+                    break;
+                case 'page_fault_replace':
+                    message = `缺页中断！页面${info.replaced_page}被页面${info.page}替换，访问时间: ${info.time}ns`;
+                    break;
+                default:
+                    message = '等待开始...';
+            }
+            document.getElementById(algoName + 'ReplaceInfo').textContent = message;
+        }
+
+        function updateHistoryTable(algoName, history) {
+            const tbody = document.getElementById(algoName + 'HistoryTable');
+            tbody.innerHTML = '';
+
+            // 用于跟踪每个步骤的内存状态
+            let currentMemory = [];
+
+            history.forEach(entry => {
+                const row = document.createElement('tr');
+                let content = '';
+                
+                // 根据操作类型更新内存状态
+                switch (entry.type) {
+                    case 'quick_table_hit':
+                    case 'memory_hit':
+                        // 内存状态保持不变
+                        break;
+                    case 'page_fault_new':
+                        // 添加新页面到内存
+                        currentMemory.push(entry.page);
+                        break;
+                    case 'page_fault_replace':
+                        // 替换页面
+                        const replaceIndex = currentMemory.indexOf(entry.replaced_page);
+                        if (replaceIndex !== -1) {
+                            currentMemory[replaceIndex] = entry.page;
+                        }
+                        break;
+                }
+
+                // 生成内存块内容（合并为一列）
+                const memoryContent = currentMemory.length > 0 ? 
+                    currentMemory.join(', ') : '-';
+
+                // 生成快表内容（合并为一列，只显示设置的快表块数）
+                const quickTableContent = useQuickTable && entry.quick_table.length > 0 ? 
+                    entry.quick_table.slice(0, quickTableSize).join(', ') : '-';
+                
+                switch (entry.type) {
+                    case 'quick_table_hit':
+                        content = `
+                            <td>${entry.page}</td>
+                            <td>${memoryContent}</td>
+                            <td>${quickTableContent}</td>
+                            <td>快表命中</td>
+                            <td>${entry.time}ns</td>
+                        `;
+                        break;
+                    case 'memory_hit':
+                        content = `
+                            <td>${entry.page}</td>
+                            <td>${memoryContent}</td>
+                            <td>${quickTableContent}</td>
+                            <td>内存命中</td>
+                            <td>${entry.time}ns</td>
+                        `;
+                        break;
+                    case 'page_fault_new':
+                        content = `
+                            <td>${entry.page}</td>
+                            <td>${memoryContent}</td>
+                            <td>${quickTableContent}</td>
+                            <td>内存未满</td>
+                            <td>${entry.time}ns</td>
+                        `;
+                        break;
+                    case 'page_fault_replace':
+                        content = `
+                            <td>${entry.page}</td>
+                            <td>${memoryContent}</td>
+                            <td>${quickTableContent}</td>
+                            <td>${entry.page}置换了${entry.replaced_page}</td>
+                            <td>${entry.time}ns</td>
+                        `;
+                        break;
+                }
+                
+                row.innerHTML = content;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 修改updateTableHeaders函数
+        function updateTableHeaders() {
+            const headers = ['fifo', 'lru', 'opt', 'lfu'].map(algo => document.getElementById(`${algo}TableHeader`).querySelector('tr'));
+            
+            headers.forEach(header => {
+                header.innerHTML = `
+                    <th>访问页面</th>
+                    <th>内存块</th>
+                    <th>快表项</th>
+                    <th>缺页置换</th>
+                    <th>存取时间</th>
+                `;
+            });
+        }
+
+        function showComparison() {
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+
+            const results = [];
+
+            ['fifo', 'lru', 'opt', 'lfu'].forEach(algoName => {
+                const alg = algorithms[algoName];
+                const faultRate = ((alg.faults / alg.step) * 100).toFixed(2);
+                const avgTime = (alg.time / alg.step).toFixed(1);
+
+                results.push({
+                    name: algoName.toUpperCase(),
+                    faults: alg.faults,
+                    rate: parseFloat(faultRate),
+                    totalTime: (alg.time / 1000).toFixed(1),
+                    avgTime: parseFloat(avgTime)
+                });
+            });
+
+            // 找出最佳结果
+            const bestFaults = Math.min(...results.map(r => r.faults));
+            const bestRate = Math.min(...results.map(r => r.rate));
+            const bestTotalTime = Math.min(...results.map(r => parseFloat(r.totalTime)));
+            const bestAvgTime = Math.min(...results.map(r => r.avgTime));
+
+            results.forEach(result => {
+                const row = document.createElement('tr');
+
+                const isBestFaults = result.faults === bestFaults;
+                const isBestRate = result.rate === bestRate;
+                const isBestTotalTime = parseFloat(result.totalTime) === bestTotalTime;
+                const isBestAvgTime = result.avgTime === bestAvgTime;
+
+                row.innerHTML = `
+                    <td>${result.name}</td>
+                    <td ${isBestFaults ? 'class="best-result"' : ''}>${result.faults}</td>
+                    <td ${isBestRate ? 'class="best-result"' : ''}>${result.rate}%</td>
+                    <td ${isBestTotalTime ? 'class="best-result"' : ''}>${result.totalTime}μs</td>
+                    <td ${isBestAvgTime ? 'class="best-result"' : ''}>${result.avgTime}ns</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('comparisonSection').style.display = 'block';
+        }
+
+        function showSettings() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); display: flex; align-items: center;
+                justify-content: center; z-index: 1000;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%;">
+                    <h3 style="margin-bottom: 20px; text-align: center;">高级设置</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label>内存访问时间 (ns):</label>
+                        <input type="number" id="memoryAccessTimeInput" value="${timeSettings.memoryAccessTime}" min="1" style="width: 100px; margin-left: 10px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label>缺页中断时间 (ns):</label>
+                        <input type="number" id="pageFaultTimeInput" value="${timeSettings.pageFaultTime}" min="1" style="width: 100px; margin-left: 10px;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label>快表访问时间 (ns):</label>
+                        <input type="number" id="quickTableTimeInput" value="${timeSettings.quickTableTime}" min="1" style="width: 100px; margin-left: 10px;">
+                    </div>
+                    <div style="text-align: center;">
+                        <button onclick="applySettings()" class="btn" style="margin-right: 10px;">应用</button>
+                        <button onclick="closeSettings()" class="btn btn-secondary">取消</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            window.currentModal = modal;
+        }
+
+
+        function applySettings() {
+            timeSettings.memoryAccessTime = parseInt(document.getElementById('memoryAccessTimeInput').value) || 100;
+            timeSettings.pageFaultTime = parseInt(document.getElementById('pageFaultTimeInput').value) || 10000;
+            timeSettings.quickTableTime = parseInt(document.getElementById('quickTableTimeInput').value) || 20;
+
+            closeSettings();
+        }
+
+        function closeSettings() {
+            if (window.currentModal) {
+                document.body.removeChild(window.currentModal);
+                window.currentModal = null;
+            }
+        }
+
+        // 添加设置按钮到设置栏
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsGroup = document.querySelector('.settings-group');
+            const settingsButton = document.createElement('button');
+            settingsButton.className = 'btn btn-secondary';
+            settingsButton.textContent = '高级设置';
+            settingsButton.onclick = showSettings;
+            settingsGroup.appendChild(settingsButton);
+        });
+
+        function saveResults() {
+            // 获取当前时间作为文件名
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[:.]/g, '-');
+            const filename = `page_replacement_results_${timestamp}.txt`;
+
+            // 收集所有数据
+            let content = '页面置换算法模拟结果\n';
+            content += '='.repeat(50) + '\n\n';
+            
+            // 添加设置信息
+            content += '设置信息：\n';
+            content += `内存块数：${memorySize}\n`;
+            content += `快表块数：${quickTableSize}\n`;
+            content += `使用快表：${useQuickTable ? '是' : '否'}\n`;
+            content += `页面访问序列：${pageSequence.join(', ')}\n\n`;
+
+            // 添加每个算法的结果
+            ['fifo', 'lru', 'opt', 'lfu'].forEach(algo => {
+                const alg = algorithms[algo];
+                content += `${algo.toUpperCase()} 算法结果：\n`;
+                content += '-'.repeat(30) + '\n';
+                content += `缺页次数：${alg.faults}\n`;
+                content += `缺页率：${((alg.faults / alg.step) * 100).toFixed(2)}%\n`;
+                content += `总时间：${(alg.time / 1000).toFixed(1)}μs\n`;
+                content += `平均时间：${(alg.time / alg.step).toFixed(1)}ns\n\n`;
+
+                // 添加历史记录
+                content += '访问历史：\n';
+                const historyTable = document.getElementById(`${algo}HistoryTable`);
+                const rows = historyTable.getElementsByTagName('tr');
+                for (let row of rows) {
+                    content += row.textContent.trim() + '\n';
+                }
+                content += '\n';
+            });
+
+            // 创建并下载文件
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+    </script>
+</body>
+</html>
